@@ -3,6 +3,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class PlayManager {
@@ -15,6 +16,10 @@ public class PlayManager {
     public Mino currentMino;
     public final int startMino_x;
     public final int startMino_y;
+    public Mino nextMino;
+    final int NEXTMINO_X;
+    final int NEXTMINO_Y;
+    public static ArrayList<Block> staticBlocks = new ArrayList<>();
     
     public PlayManager() {
         left_x = GamePanel.width / 2 - width / 2;
@@ -25,6 +30,10 @@ public class PlayManager {
         startMino_x = left_x+width/2-30;
         startMino_y= top_y+30;
         currentMino.setXY(startMino_x, startMino_y);
+        NEXTMINO_X= right_x + 175;
+        NEXTMINO_Y = top_y+500;
+        nextMino= pickMino();
+        nextMino.setXY(NEXTMINO_X, NEXTMINO_Y);
         
     }
 
@@ -48,10 +57,60 @@ public class PlayManager {
         {
         if(currentMino!=null) 
         {
-            currentMino.update();
+            if(currentMino.active==false)
+            {
+                   for(int i=0;i<4;i++)
+                   {
+                    staticBlocks.add(currentMino.b[i]);
+                   }
+                   currentMino.deactivating=false;
+                   currentMino=nextMino;
+                   currentMino.setXY(startMino_x, startMino_y);
+                   nextMino=pickMino();
+                   nextMino.setXY(NEXTMINO_X, NEXTMINO_Y);
+                   checkDelete();
+            }
+            else{
+                currentMino.update();
+            }
+            
         }
     }
     }
+    private void checkDelete() {
+       int blockCount=0;
+      
+       for(int y=top_y;y<bottom_y;y+=30)
+       {
+           for(int i=0;i<staticBlocks.size();i++)
+           {
+            if(staticBlocks.get(i).y==y)
+            {
+                blockCount++;
+            }
+           }
+           if(blockCount==12)
+           {
+            for(int i=staticBlocks.size()-1;i>=0;i--)
+            {
+                if(staticBlocks.get(i).y==y)
+                {
+                  staticBlocks.remove(i);
+                }
+            }
+            for(int i=0;i<staticBlocks.size();i++)
+            {
+                if(staticBlocks.get(i).y<y)
+                {
+                    staticBlocks.get(i).y+=30;
+                }
+            }
+            y-=30;
+           }
+           blockCount=0;
+       }
+    }
+
     public void paintComponent(Graphics2D g2)
     {
        g2.setColor(Color.white);
@@ -62,6 +121,13 @@ public class PlayManager {
        g2.drawRect(x,y,200,200);
        g2.setFont(new Font("Arial",Font.PLAIN,30));
        g2.drawString("NEXT", x+60, y+60);
+       nextMino.draw((g2));
+
+        for(int i=0;i<staticBlocks.size();i++)
+        {
+            staticBlocks.get(i).draw(g2);
+        }
+
        g2.setColor(Color.yellow);
        g2.setFont(g2.getFont().deriveFont(50f));
        if(KeyHandler.pausePressed)
@@ -72,4 +138,5 @@ public class PlayManager {
        }
        
     }
+    
 }

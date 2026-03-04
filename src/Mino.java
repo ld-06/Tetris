@@ -7,6 +7,9 @@ public class Mino {
     public int autoDropCounter = 0;
     public int direction = 1;
     public boolean leftCollision, rightCollision, bottomCollision;
+    public boolean active = true;
+    public boolean deactivating;
+    int deactivateCounter=0;
 
     public void create(Color c) {
         for (int i = 0; i < 4; i++) {
@@ -19,18 +22,21 @@ public class Mino {
     }
 
     public void updateXY(int direction) {
-       checkRotationCollision();
-        if(leftCollision==false&&rightCollision==false&&bottomCollision==false)
-        {
-        this.direction = direction;
-        for (int i = 0; i < 4; i++) {
-            b[i].x = tempBlock[i].x;
-            b[i].y=tempBlock[i].y;
+        checkRotationCollision();
+        if (leftCollision == false && rightCollision == false && bottomCollision == false) {
+            this.direction = direction;
+            for (int i = 0; i < 4; i++) {
+                b[i].x = tempBlock[i].x;
+                b[i].y = tempBlock[i].y;
+            }
         }
-    }
     }
 
     public void update() {
+        if(deactivating)
+        {
+            deactivating();
+        }
         if (KeyHandler.upPressed) {
             if (direction == 1) {
                 getDirection2();
@@ -72,13 +78,31 @@ public class Mino {
             }
             KeyHandler.rightPressed = false;
         }
-        autoDropCounter++;
-        if (autoDropCounter == 60) {
-            for (int i = 0; i < 4; i++) {
-                b[i].y += 30;
+        if (bottomCollision) {
+            deactivating=true;
+        } else {
+            autoDropCounter++;
+            if (autoDropCounter == 60) {
+                for (int i = 0; i < 4; i++) {
+                    b[i].y += 30;
+                }
+                autoDropCounter = 0;
             }
-            autoDropCounter = 0;
         }
+
+    }
+
+    private void deactivating() {
+       deactivateCounter++;
+       if(deactivateCounter==45)
+       {
+        deactivateCounter=0;
+        checkMovementCollision();
+        if(bottomCollision)
+        {
+            active=false;
+        }
+       }
     }
 
     public void draw(Graphics2D g2) {
@@ -107,6 +131,7 @@ public class Mino {
 
     public void checkMovementCollision() {
         leftCollision = rightCollision = bottomCollision = false;
+        checkStaticBlockCollision();
         for (int i = 0; i < 4; i++) {
             if (b[i].x == PlayManager.left_x)
                 leftCollision = true;
@@ -123,6 +148,7 @@ public class Mino {
 
     public void checkRotationCollision() {
         leftCollision = rightCollision = bottomCollision = false;
+        checkStaticBlockCollision();
         for (int i = 0; i < 4; i++) {
             if (tempBlock[i].x < PlayManager.left_x)
                 leftCollision = true;
@@ -136,5 +162,34 @@ public class Mino {
                 bottomCollision = true;
         }
     }
-
+private  void checkStaticBlockCollision()
+    {
+        for(int i=0;i<PlayManager.staticBlocks.size();i++)
+        {
+            int targetX=PlayManager.staticBlocks.get(i).x;
+            int targetY=PlayManager.staticBlocks.get(i).y;
+            for(int ii=0;ii<b.length;ii++)
+            {
+                if(b[ii].y+30==targetY&&b[ii].x==targetX)
+                {
+                    bottomCollision=true;
+                }
+            }
+            for(int ii=0;ii<b.length;ii++)
+            {
+                if(b[ii].x-30==targetX&&b[ii].y==targetY)
+                {
+                    leftCollision=true;
+                }
+            }
+            for(int ii=0;ii<b.length;ii++)
+            {
+                if(b[ii].x+30==targetX&&b[ii].y==targetY)
+                {
+                    rightCollision=true;
+                }
+            }
+            
+        }
+    }
 }
